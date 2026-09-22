@@ -42,15 +42,20 @@ p_stop: checks stop bit polarity (rx == 1 → valid, latch data/datavld; rx == 0
 p_wait: handles back-to-back frames with no idle gap — if a new start bit has already begun the instant the stop bit ends, this state re-synchronizes on it (half-tick centering) instead of dropping it.
 Testing
 
+Testing
+
 Verified via:
 
-Loopback simulation in Vivado (tx_tb, rx_tb, top_tb)
-On-board testing through the MAX3232 Pmod with PuTTY (115200 8-N-1)
-Oscilloscope inspection of rx/tx lines to validate bit timing
-Vivado ILA (ChipScope) captures on uut_rx/reg_state (3-bit) and uut_tx/reg_state (2-bit) to inspect FSM behavior directly on hardware — note both modules use the same signal name reg_state, so when probing make sure you're looking at the right hierarchy path.
+- Loopback simulation in Vivado (tx_tb, rx_tb, top_tb)
+- On-board testing through the MAX3232 Pmod with PuTTY (115200 8-N-1)
+- Oscilloscope inspection of rx/tx lines to validate bit timing
+- Vivado ILA (ChipScope) captures on uut_rx/reg_state (3-bit) and uut_tx/reg_state (2-bit) to inspect FSM behavior directly on hardware — note both modules use the same signal name reg_state, so when probing make sure you're looking at the right hierarchy path.
+**rx_tb simulation** — receiver FSM correctly detects the start bit, samples mid-bit, and captures the byte with `datavld` asserting once the stop bit confirms a valid frame:
+<img width="636" height="367" alt="Screenshot 2026-09-22 at 15 46 46" src="https://github.com/user-attachments/assets/dc6fa135-c150-4069-8f17-b3c7121a6435" />
+**top_tb simulation** — full echo loop verified: `reg_captured` matches `reg_expdata` across multiple transmitted bytes, with the LED counter (`led[3:0]`) incrementing on each successful frame:
+<img width="638" height="372" alt="Screenshot 2026-09-22 at 15 47 10" src="https://github.com/user-attachments/assets/a2944131-d37c-4656-badc-1ddba8cd2888" />
+
 Status
+
 Receiver: working. Confirmed on hardware — byte counter increments correctly, rx_data captures the correct value, no framing errors in ILA captures.
 Transmitter: working. Confirmed on hardware — full echo loop verified end to end, every character typed in the terminal is correctly echoed back.
-Known gotchas
-CLK_FREQ mismatches between the actual board clock and the module parameter cause consistent bit-sampling drift — symptoms range from garbled characters to full glitch output, not just occasional bit errors.
-Stop-bit and start-bit polarity assumes an idle-high line (standard UART); do not invert rx/~rx checks without confirming the physical line polarity first.
