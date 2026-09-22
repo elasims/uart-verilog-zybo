@@ -34,6 +34,28 @@ receiver    #(.CLK_FREQ(125000000), .BAUD_RATE(115200)) uut_rx (...);
 
 Default BAUD_RATE is 115200.
 
+## State Diagrams
+```mermaid
+stateDiagram-v2
+    [*] --> p_idle
+    p_idle --> p_start: rx falls (start bit)
+    p_start --> p_data: HALF_TICK elapsed (mid-bit sync)
+    p_data --> p_data: sample on bauddone, shift in LSB-first
+    p_data --> p_stop: 8 bits received
+    p_stop --> p_idle: rx == 1 (valid stop bit)<br/>datavld asserted
+    p_stop --> p_idle: rx == 0<br/>fram_err asserted
+    p_stop --> p_wait: new start bit begins immediately
+    p_wait --> p_start: re-sync on back-to-back frame
+```
+```mermaid
+stateDiagram-v2
+    [*] --> t_idle
+    t_idle --> t_start: start asserted
+    t_start --> t_data: start bit sent
+    t_data --> t_data: shift out bit, wait bauddone
+    t_data --> t_stop: 8 bits sent
+    t_stop --> t_idle: stop bit sent, busy cleared
+```
 Receiver FSM notes
 p_idle → p_start: triggered on rx falling edge (~rx), since the line idles high.
 p_start: counts HALF_TICK cycles to center sampling on the middle of the start bit.
