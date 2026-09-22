@@ -1,4 +1,4 @@
-# transmitter-receiver
+# uart-verilog-zybo
 UART on Zybo Z7-10 (Verilog)
 
 A from-scratch UART transmitter/receiver implementation in Verilog, targeting the Digilent Zybo Z7-10 (Zynq-7010) FPGA board. The top-level module implements a simple echo: any byte received over UART is immediately retransmitted back.
